@@ -39,13 +39,15 @@ def update_sheets_data_with_api_key(spreadsheet_id, range_name, values, api_key)
 
 @update_stock_bp.route('/api/update_stock', methods=['POST'])
 def update_stock():
+    """Обрабатывает заказанные товары и обновляет остатки в Google Sheets."""
     try:
+        # Получаем данные из запроса
         data = request.json
         if not data or 'updates' not in data:
             return jsonify({'error': 'Некорректные данные'}), 400
         
-        updates = data['updates']
-        print("Полученные данные для обновления:", updates)  # Ожидается список вида [{'id': 1, 'ordered': 2}, ...]
+        updates = data['updates']  # Ожидается массив объектов [{id, ordered}]
+        print(f"Полученные данные для обновления: {updates}")
 
         # Получаем текущие данные из таблицы
         rows = get_sheets_data_with_api_key(SPREADSHEET_ID, RANGE, API_KEY)
@@ -55,7 +57,7 @@ def update_stock():
         # Обновляем остатки
         updated_values = []
         for row in rows:
-            if len(row) >= 8 and row[0].isdigit():
+            if len(row) >= 8 and row[0].isdigit():  # Проверяем, что ID и остаток корректны
                 product_id = int(row[0])
                 for update in updates:
                     if update['id'] == product_id:
@@ -72,5 +74,5 @@ def update_stock():
         return jsonify({'message': 'Данные успешно обновлены'}), 200
 
     except Exception as e:
-        print(f"Ошибка: {e}")
+        print(f"Ошибка на сервере: {e}")
         return jsonify({'error': 'Произошла ошибка на сервере'}), 500
